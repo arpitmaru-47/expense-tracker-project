@@ -1,6 +1,22 @@
-venv/
-__pycache__/
-*.pyc
-.env
+# Database and backup
+*.db
+*.sqlite3
 data/
-expenses.db
+backup/
+*.backup
+
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+#Python
+
+venv/
+.venv/
+__pycache__/
+*.pyc 
+
+# Git
+.git/

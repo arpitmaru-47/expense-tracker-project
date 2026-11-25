@@ -1,8 +1,22 @@
+secrets: 
+  app_secret:
+    file: ./secrets/app_secret.txt
+
 services:
 
   web:
     build: .
     container_name: expense-app
+
+    environment:
+      APP_ENV: ${APP_ENV}
+      APP_PORT: ${APP_PORT}
+
+    secrets:
+      - app_secret
+
+    networks:
+      - backend
 
     ports:
       - "5000:5000"
@@ -11,3 +25,63 @@ services:
       - ./data:/app/data
 
     restart: unless-stopped
+
+    # Security
+    read_only: true
+
+    cap_drop:
+      - ALL
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+ 
+    security_opt:
+      - no-new-privileges:true
+
+    # Temporary writable directories
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /home/appuser/.gunicorn:rw,noexec,nosuid,size=16m,uid=10001,gid=10001
+
+    # Resource restrications
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.5
+
+  nginx:
+    image: nginx:alpine
+    container_name: expense-nginx 
+
+    networks:
+      - frontend
+      - backend
+
+    ports:
+      - "8080:80"
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    depends_on:
+      web:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+networks:
+  frontend:
+    driver: bridge
+
+  backend:
+    driver: bridge 
+    internal: true
+
